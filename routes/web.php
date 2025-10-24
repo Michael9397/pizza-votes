@@ -4,15 +4,20 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+// Public routes
+Volt::route('/', 'pages.index')->name('home');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+// Voting route (accessible to everyone - both auth and unauth)
+Volt::route('restaurants/{restaurant}/vote', 'restaurants.vote')->name('restaurants.vote');
 
-Route::middleware(['auth'])->group(function () {
+// Authenticated routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Volt::route('dashboard', 'dashboard')->name('dashboard');
+    Volt::route('restaurants', 'restaurants.list')->name('restaurants.index');
+    Volt::route('restaurants/create', 'restaurants.create')->name('restaurants.create');
+    Volt::route('restaurants/{restaurant}', 'restaurants.show')->name('restaurants.show');
+    Volt::route('restaurants/{restaurant}/edit', 'restaurants.edit')->name('restaurants.edit');
+
     Route::redirect('settings', 'settings/profile');
 
     Volt::route('settings/profile', 'settings.profile')->name('profile.edit');
