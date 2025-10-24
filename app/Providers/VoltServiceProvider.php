@@ -20,9 +20,8 @@ class VoltServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Mount all Volt components from the livewire directory
-        Volt::mount(
-            resource_path('views/livewire')
-        );
+        // Mount Volt components from the livewire directory
+        // This tells Volt where to look for .php component files
+        Volt::mount(resource_path('views/livewire'));
     }
 }
