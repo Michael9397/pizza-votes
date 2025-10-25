@@ -23,5 +23,8 @@ class VoltServiceProvider extends ServiceProvider
         // Mount Volt components from the livewire directory
         // This tells Volt where to look for .php component files
         Volt::mount(resource_path('views/livewire'));
+
+        // Let Volt's default resolver handle .blade.php files
+        // (No custom resolver needed anymore since we use .blade.php extension)
     }
 }

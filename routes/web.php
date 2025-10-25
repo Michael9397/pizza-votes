@@ -7,11 +7,28 @@ use Livewire\Volt\Volt;
 // Public routes
 Volt::route('/', 'pages.index')->name('home');
 
-// Voting route (accessible to everyone - both auth and unauth)
-// Using implicit route model binding
+// Dev login route (development only)
+if (app()->isLocal()) {
+    Route::get('/dev-login', function () {
+        $user = \App\Models\User::where('email', 'admin@example.com')->first();
+        if ($user) {
+            auth()->login($user);
+            return redirect()->route('dashboard');
+        }
+        return redirect()->route('login')->with('error', 'Dev user not found');
+    })->name('dev-login');
+}
+
+// Voting routes (accessible to everyone - both auth and unauth)
+// Using implicit route model binding with ID (legacy route)
 Volt::route('restaurants/{restaurant}/vote', 'restaurants.vote')
     ->middleware([])
     ->name('restaurants.vote');
+
+// Public voting link using slug
+Volt::route('vote/{slug}', 'restaurants.vote-by-slug')
+    ->middleware([])
+    ->name('restaurants.vote-by-slug');
 
 // Authenticated routes
 Route::middleware(['auth', 'verified'])->group(function () {

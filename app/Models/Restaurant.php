@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Restaurant extends Model
 {
@@ -14,7 +15,28 @@ class Restaurant extends Model
         'name',
         'location',
         'notes',
+        'slug',
+        'voting_enabled',
     ];
+
+    protected $casts = [
+        'voting_enabled' => 'boolean',
+    ];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($restaurant) {
+            if (!$restaurant->slug) {
+                $restaurant->slug = Str::slug($restaurant->name);
+            }
+        });
+
+        static::updating(function ($restaurant) {
+            if ($restaurant->isDirty('name') && !$restaurant->isDirty('slug')) {
+                $restaurant->slug = Str::slug($restaurant->name);
+            }
+        });
+    }
 
     /**
      * Get all ratings for this restaurant

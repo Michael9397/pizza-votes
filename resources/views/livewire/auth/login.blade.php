@@ -48,6 +48,15 @@
             </div>
         </form>
 
+        @if (app()->isLocal())
+            <a
+                href="{{ route('dev-login') }}"
+                class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition text-sm text-center inline-block"
+            >
+                🚀 Dev Login (User 1)
+            </a>
+        @endif
+
         @if (Route::has('register'))
             <div class="space-x-1 text-sm text-center rtl:space-x-reverse text-zinc-600 dark:text-zinc-400">
                 <span>{{ __('Don\'t have an account?') }}</span>
