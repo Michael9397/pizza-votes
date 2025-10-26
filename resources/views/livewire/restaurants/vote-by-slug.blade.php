@@ -2,26 +2,40 @@
 
 use App\Models\Rating;
 use App\Models\Restaurant;
+use App\Models\VotingSession;
 use Livewire\Volt\Component;
 
 new class extends Component {
     public Restaurant $restaurant;
+    public ?VotingSession $votingSession = null;
     public string $voter_name = '';
     public array $scores = ['taste' => 3, 'service' => 3, 'atmosphere' => 3, 'value' => 3];
     public string $notes = '';
     public ?string $visited_at = null;
     public bool $submitted = false;
 
-    public function mount(string $slug)
+    public function mount(string $slug, ?string $session_slug = null)
     {
         $this->restaurant = Restaurant::where('slug', $slug)
             ->firstOr(function () {
                 abort(404, 'Restaurant not found');
             });
 
-        // Check if voting is enabled
-        if (!$this->restaurant->voting_enabled) {
-            abort(403, 'Voting is not currently enabled for this restaurant');
+        // Session slug is now required
+        if (!$session_slug) {
+            abort(403, 'Voting requires a voting session link. Please ask the session creator for the voting link.');
+        }
+
+        // Check if voting session exists and is valid
+        $this->votingSession = VotingSession::where('slug', $session_slug)
+            ->where('restaurant_id', $this->restaurant->id)
+            ->firstOr(function () {
+                abort(404, 'Voting session not found or has expired');
+            });
+
+        // Check if session is active
+        if (!$this->votingSession->is_active) {
+            abort(403, 'This voting session is no longer active. Contact the session creator to reopen it.');
         }
 
         $this->visited_at = now()->format('Y-m-d');
@@ -48,6 +62,7 @@ new class extends Component {
                 'score' => (int) $score,
                 'notes' => $this->notes ?: null,
                 'visited_at' => $this->visited_at,
+                'voting_session_id' => $this->votingSession?->id,
             ]);
         }
 
@@ -91,6 +106,18 @@ new class extends Component {
                     </a>
                 </div>
             @else
+                <!-- Session Context Banner -->
+                @if ($votingSession)
+                    <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <p class="text-sm text-blue-700 dark:text-blue-300">
+                            <span class="font-semibold">Voting Session:</span> {{ $votingSession->name }}
+                        </p>
+                        @if ($votingSession->description)
+                            <p class="text-sm text-blue-600 dark:text-blue-400 mt-1">{{ $votingSession->description }}</p>
+                        @endif
+                    </div>
+                @endif
+
                 <div class="mb-8">
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                         🍕 {{ $restaurant->name }}

@@ -39,13 +39,31 @@ new class extends Component {
         // Get top restaurant by overall score
         $topRestaurant = $restaurants->sortByDesc('overall_score')->first();
 
+        // Get user's voting sessions
+        $userSessions = auth()->user()?->votingSessions()
+            ->with('restaurant')
+            ->orderBy('created_at', 'desc')
+            ->get() ?? collect();
+
         return [
             'restaurants' => $restaurants,
             'total_submissions' => $totalSubmissions,
             'dimension_averages' => $dimensionAverages,
             'top_restaurant' => $topRestaurant,
+            'user_sessions' => $userSessions,
         ];
     }
+
+    public function toggleSession(\App\Models\VotingSession $session)
+    {
+        if ($session->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized');
+        }
+
+        $session->is_active = !$session->is_active;
+        $session->save();
+    }
+
 };
 ?>
 
@@ -60,9 +78,14 @@ new class extends Component {
                     </h1>
                     <p class="text-gray-600 dark:text-gray-300 mt-2">Manage and view your pizza restaurant ratings</p>
                 </div>
-                <a href="{{ route('restaurants.create') }}" class="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-medium">
-                    + Add Restaurant
-                </a>
+                <div class="flex gap-3">
+                    <a href="{{ route('restaurants.create') }}" class="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-medium">
+                        + Add Restaurant
+                    </a>
+                    <a href="{{ route('sessions.create') }}" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                        + New Voting Session
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -111,6 +134,73 @@ new class extends Component {
                 @endforeach
             </div>
         </div>
+
+        <!-- Active Voting Sessions -->
+        @if ($user_sessions->count() > 0)
+            <div class="bg-white dark:bg-zinc-800 rounded-lg shadow p-6 mb-12">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Your Voting Sessions</h3>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ $user_sessions->where('is_active', true)->count() }} active</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach ($user_sessions as $session)
+                        @php
+                            $voteCount = intval($session->ratings->count() / 4);
+                        @endphp
+                        <div class="border border-gray-200 dark:border-zinc-700 rounded-lg p-4 hover:shadow-lg dark:hover:shadow-lg dark:shadow-zinc-700 transition">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900 dark:text-white">{{ $session->name }}</h4>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ $session->restaurant->name }}</p>
+                                </div>
+                                @if ($session->is_active)
+                                    <span class="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs font-semibold rounded">Active</span>
+                                @else
+                                    <span class="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-400 text-xs font-semibold rounded">Closed</span>
+                                @endif
+                            </div>
+
+                            <div class="flex items-center justify-between mb-4 pt-2 border-t border-gray-200 dark:border-zinc-700">
+                                <span class="text-sm text-gray-600 dark:text-gray-400">{{ $voteCount }} {{ Str::plural('vote', $voteCount) }}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-500">{{ $session->created_at->format('M d, Y') }}</span>
+                            </div>
+
+                            <div class="flex flex-col gap-2">
+                                @if ($session->is_active)
+                                    <div class="flex gap-2">
+                                        <button
+                                            type="button"
+                                            x-data="{ copied: false }"
+                                            @click="copied = true; navigator.clipboard.writeText('{{ route('restaurants.vote-by-session', [$session->restaurant->slug, $session->slug]) }}'); setTimeout(() => copied = false, 2000)"
+                                            class="flex-1 px-3 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition">
+                                            <span x-show="!copied">📋 Copy Link</span>
+                                            <span x-show="copied">✓ Copied!</span>
+                                        </button>
+                                        <a href="{{ route('restaurants.show', $session->restaurant) }}" class="flex-1 px-3 py-1 text-xs bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300 rounded hover:bg-orange-200 dark:hover:bg-orange-800 transition text-center">
+                                            📊 View Results
+                                        </a>
+                                    </div>
+                                @else
+                                    <a href="{{ route('restaurants.show', $session->restaurant) }}" class="w-full px-3 py-1 text-xs bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300 rounded hover:bg-orange-200 dark:hover:bg-orange-800 transition text-center">
+                                        📊 View Results
+                                    </a>
+                                @endif
+                                <button
+                                    wire:click="toggleSession({{ $session->id }})"
+                                    class="w-full px-3 py-1 text-xs rounded transition @if ($session->is_active) bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 @else bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 @endif">
+                                    @if ($session->is_active)
+                                        🔒 Close Session
+                                    @else
+                                        🔓 Reopen Session
+                                    @endif
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         <!-- Restaurants Table -->
         @if (count($restaurants) > 0)

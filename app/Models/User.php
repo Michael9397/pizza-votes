@@ -70,4 +70,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(Rating::class);
     }
+
+    /**
+     * Get all voting sessions created by this user
+     */
+    public function votingSessions(): HasMany
+    {
+        return $this->hasMany(VotingSession::class);
+    }
+
+    /**
+     * Get all restaurants created by this user
+     */
+    public function restaurants(): HasMany
+    {
+        return $this->hasMany(Restaurant::class);
+    }
 }

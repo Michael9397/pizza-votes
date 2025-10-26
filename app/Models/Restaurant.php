@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
@@ -17,6 +18,7 @@ class Restaurant extends Model
         'notes',
         'slug',
         'voting_enabled',
+        'user_id',
     ];
 
     protected $casts = [
@@ -39,11 +41,27 @@ class Restaurant extends Model
     }
 
     /**
+     * Get the user who created this restaurant
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
      * Get all ratings for this restaurant
      */
     public function ratings(): HasMany
     {
         return $this->hasMany(Rating::class);
+    }
+
+    /**
+     * Get all voting sessions for this restaurant
+     */
+    public function votingSessions(): HasMany
+    {
+        return $this->hasMany(VotingSession::class);
     }
 
     /**

@@ -21,9 +21,18 @@ new class extends Component {
             'name' => $this->name,
             'location' => $this->location ?: null,
             'notes' => $this->notes ?: null,
+            'user_id' => auth()->id(),
         ]);
 
         $this->submitted = true;
+    }
+
+    public function resetForm()
+    {
+        $this->name = '';
+        $this->location = '';
+        $this->notes = '';
+        $this->submitted = false;
     }
 };
 ?>
@@ -49,7 +58,7 @@ new class extends Component {
                             Go to Dashboard
                         </a>
                         <button
-                            wire:click="$reset"
+                            wire:click="resetForm"
                             class="inline-block px-6 py-3 bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-600 transition"
                         >
                             Add Another

@@ -20,8 +20,27 @@ new class extends Component {
                 ];
             });
 
+        // Get top pizza place
+        $topRestaurant = $restaurants->sortByDesc('overall_score')->first();
+
+        // Calculate aggregate scores across all restaurants
+        $allRatings = \App\Models\Rating::all();
+        $aggregateScores = [
+            'taste' => round($allRatings->where('dimension', 'taste')->avg('score'), 1),
+            'service' => round($allRatings->where('dimension', 'service')->avg('score'), 1),
+            'atmosphere' => round($allRatings->where('dimension', 'atmosphere')->avg('score'), 1),
+            'value' => round($allRatings->where('dimension', 'value')->avg('score'), 1),
+        ];
+
+        $totalSubmissions = $allRatings->groupBy(function ($rating) {
+            return $rating->voter_name . '|' . $rating->created_at->format('Y-m-d H:i:s');
+        })->count();
+
         return [
             'restaurants' => $restaurants,
+            'top_restaurant' => $topRestaurant,
+            'aggregate_scores' => $aggregateScores,
+            'total_submissions' => $totalSubmissions,
         ];
     }
 };
@@ -87,6 +106,58 @@ new class extends Component {
             @endauth
         </div>
 
+        <!-- Aggregated Stats Section -->
+        @if ($top_restaurant || $total_submissions > 0)
+            <div class="mb-16">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- Top Pizza Place Card -->
+                    <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-lg p-8">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 dark:text-gray-300 text-sm font-medium mb-2">🏆 Top Pizza Place</p>
+                                @if ($top_restaurant)
+                                    <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $top_restaurant['name'] }}</h3>
+                                    <p class="text-lg text-orange-600 dark:text-orange-400 font-semibold mt-2">{{ number_format($top_restaurant['overall_score'], 1) }}/5</p>
+                                @else
+                                    <p class="text-2xl text-gray-500 dark:text-gray-400">No ratings yet</p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Submissions Card -->
+                    <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-lg p-8">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 dark:text-gray-300 text-sm font-medium mb-2">📝 All Submissions</p>
+                                <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ $total_submissions }}</p>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm mt-2">family votes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Across All Restaurants Scores -->
+                <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-lg p-8">
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">Across All Restaurants</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        @foreach (['taste' => '🍕 Taste', 'service' => '👤 Service', 'atmosphere' => '🎭 Atmosphere', 'value' => '💰 Value'] as $dimension => $label)
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $label }}</span>
+                                    <span class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ $aggregate_scores[$dimension] }}/5</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-3">
+                                    <div class="bg-orange-600 h-3 rounded-full transition-all" style="width: {{ ($aggregate_scores[$dimension] / 5) * 100 }}%"></div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- Restaurants Grid -->
         @if ($restaurants->count() > 0)
             <div class="mb-16">
@@ -135,14 +206,14 @@ new class extends Component {
                                 {{ $restaurant['visit_count'] }} {{ Str::plural('visit', $restaurant['visit_count']) }}
                             </div>
 
-                            <!-- Vote Button -->
+                            <!-- View Details Button -->
                             @auth
                                 <a href="{{ route('restaurants.show', $restaurant['id']) }}" class="w-full block text-center px-4 py-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded hover:bg-orange-200 dark:hover:bg-orange-900/50 transition font-medium">
-                                    View Details & Vote
+                                    View Details
                                 </a>
                             @else
-                                <a href="{{ route('restaurants.vote', $restaurant['id']) }}" class="w-full block text-center px-4 py-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded hover:bg-orange-200 dark:hover:bg-orange-900/50 transition font-medium">
-                                    Vote
+                                <a href="{{ route('login') }}" class="w-full block text-center px-4 py-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded hover:bg-orange-200 dark:hover:bg-orange-900/50 transition font-medium">
+                                    Sign in to Vote
                                 </a>
                             @endauth
                         </div>

@@ -30,6 +30,11 @@ Volt::route('vote/{slug}', 'restaurants.vote-by-slug')
     ->middleware([])
     ->name('restaurants.vote-by-slug');
 
+// Public voting link with session slug
+Volt::route('vote/{slug}/{session_slug}', 'restaurants.vote-by-slug')
+    ->middleware([])
+    ->name('restaurants.vote-by-session');
+
 // Authenticated routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('dashboard', 'dashboard')->name('dashboard');
@@ -37,6 +42,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('restaurants/create', 'restaurants.create')->name('restaurants.create');
     Volt::route('restaurants/{restaurant}', 'restaurants.show')->name('restaurants.show');
     Volt::route('restaurants/{restaurant}/edit', 'restaurants.edit')->name('restaurants.edit');
+
+    Volt::route('sessions', 'sessions.list')->name('sessions.index');
+    Volt::route('sessions/create', 'sessions.create')->name('sessions.create');
 
     Route::redirect('settings', 'settings/profile');
 

@@ -18,6 +18,7 @@ class Rating extends Model
         'score',
         'notes',
         'visited_at',
+        'voting_session_id',
     ];
 
     protected $casts = [
@@ -39,6 +40,14 @@ class Rating extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the voting session this rating belongs to
+     */
+    public function votingSession(): BelongsTo
+    {
+        return $this->belongsTo(VotingSession::class);
     }
 
     /**
