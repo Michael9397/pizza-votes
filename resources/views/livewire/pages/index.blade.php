@@ -84,7 +84,7 @@ new class extends Component {
             <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
                 🍕 Pizza Family Ratings
             </h1>
-            <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">
+            <p class="text-xl text-gray-600 dark:text-gray-400">
                 Rate and track your favorite pizza places together
             </p>
 
@@ -92,15 +92,6 @@ new class extends Component {
                 <div class="space-x-4">
                     <a href="{{ route('dashboard') }}" class="inline-block px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition">
                         Dashboard
-                    </a>
-                </div>
-            @else
-                <div class="space-x-4">
-                    <a href="{{ route('login') }}" class="inline-block px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition">
-                        Sign In
-                    </a>
-                    <a href="{{ route('register') }}" class="inline-block px-6 py-3 bg-white dark:bg-zinc-800 text-orange-600 border border-orange-600 dark:border-orange-500 rounded-lg hover:bg-orange-50 dark:hover:bg-zinc-700 transition">
-                        Sign Up
                     </a>
                 </div>
             @endauth
